@@ -62,6 +62,10 @@ type NotionText struct {
     Data map[string]string
 }
 
+type ChildInfo struct {
+    Blocks []BulletedListItems
+}
+
 func NewSyncFlagSet(httpClient httpInteractor, output *bytes.Buffer, cmd *exec.Cmd) *ffcli.Command {
     c := &Config{httpClient: httpClient, out: output, cmd: cmd}
     syncFlagSet := flag.NewFlagSet("jrnlNotion sync", flag.ExitOnError)
