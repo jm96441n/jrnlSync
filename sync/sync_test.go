@@ -42,7 +42,7 @@ func TestExecSendsResultsFromJrnlToNotionForOnlyTheDateProvided(t *testing.T) {
         t.Error(err)
     }
 
-    httpClient := &mockHTTPClient{errOnDo: false}
+    httpClient := &mockHTTPClient{errOnDo: false, statusCode: 200}
     config := sync.Config{
         DBID: "mockdbid",
         NotionKey: "fakeNotionKey",
@@ -50,7 +50,10 @@ func TestExecSendsResultsFromJrnlToNotionForOnlyTheDateProvided(t *testing.T) {
         Cmd: mockCommand{errOnOutput: false, outputString: outputString},
         DateForEntries: "2021-11-24",
     }
-    config.Exec(context.Background(), []string{})
+    err = config.Exec(context.Background(), []string{})
+    if err != nil {
+        t.Error(err)
+    }
     sentNotionDocument := sync.NotionDocument{}
     err = json.Unmarshal(httpClient.bodyOfRequest, &sentNotionDocument)
     if err != nil {
@@ -63,6 +66,125 @@ func TestExecSendsResultsFromJrnlToNotionForOnlyTheDateProvided(t *testing.T) {
 
     if len(sentNotionDocument.Children) != len(rightDay) {
         t.Errorf("expected %d children, got %d", len(rightDay), len(sentNotionDocument.Children))
+    }
+}
+
+func TestReturnsErrWhenCommandFailsToRun(t *testing.T) {
+    httpClient := &mockHTTPClient{errOnDo: false, statusCode: 200}
+    config := sync.Config{
+        DBID: "mockdbid",
+        NotionKey: "fakeNotionKey",
+        HttpClient: httpClient,
+        Cmd: mockCommand{errOnOutput: true, outputString: ""},
+        DateForEntries: "2021-11-24",
+    }
+    err := config.Exec(context.Background(), []string{})
+    if !errors.Is(err, sync.ErrJrnlCommandFailed) {
+        t.Errorf("Expected error to be of type ErrJrnlCommandFailed, got %T", err)
+    }
+}
+
+func TestReturnsErrWhenFailingToUnmarshalJrnlOutput(t *testing.T) {
+    outputString := `{"this is gonna break": "missing end bracket"`
+    httpClient := &mockHTTPClient{errOnDo: false, statusCode: 200}
+    config := sync.Config{
+        DBID: "mockdbid",
+        NotionKey: "fakeNotionKey",
+        HttpClient: httpClient,
+        Cmd: mockCommand{errOnOutput: false, outputString: outputString},
+        DateForEntries: "2021-11-24",
+    }
+    err := config.Exec(context.Background(), []string{})
+    if !errors.Is(err, sync.ErrFailedToUnmarshalJrnlOutput) {
+        t.Errorf("Expected error to be of type ErrFailedToUnmarshalJrnlOuptput, got %+v", err)
+    }
+}
+
+func TestReturnsErrWhenFailingToSendRequestToNotion(t *testing.T) {
+    tooEarly := map[string]string{
+        "body": "Too early",
+        "date": "2021-11-23",
+    }
+    rightDay := []map[string]string{
+        {
+          "body": "The new one",
+          "date": "2021-11-24",
+        },
+        {
+          "body": "next one",
+          "date": "2021-11-24",
+        },
+        {
+          "body": "the last one",
+          "date": "2021-11-24",
+        },
+    }
+    tooLate := map[string]string{
+        "body": "Too late",
+        "date": "2021-11-25",
+    }
+
+    outputString, err := buildOutputString(tooEarly, rightDay, tooLate)
+    if err != nil {
+        t.Error(err)
+    }
+
+
+    httpClient := &mockHTTPClient{errOnDo: true, statusCode: 200}
+    config := sync.Config{
+        DBID: "mockdbid",
+        NotionKey: "fakeNotionKey",
+        HttpClient: httpClient,
+        Cmd: mockCommand{errOnOutput: false, outputString: outputString},
+        DateForEntries: "2021-11-24",
+    }
+    err = config.Exec(context.Background(), []string{})
+    if !errors.Is(err, sync.ErrPostingToNotion) {
+        t.Errorf("Expected error to be of type ErrPostingToNotion, got %+v", err)
+    }
+}
+
+func TestReturnsErrWhenFailingToNotionRespondsWithAFailureForStatusCode(t *testing.T) {
+    tooEarly := map[string]string{
+        "body": "Too early",
+        "date": "2021-11-23",
+    }
+    rightDay := []map[string]string{
+        {
+          "body": "The new one",
+          "date": "2021-11-24",
+        },
+        {
+          "body": "next one",
+          "date": "2021-11-24",
+        },
+        {
+          "body": "the last one",
+          "date": "2021-11-24",
+        },
+    }
+    tooLate := map[string]string{
+        "body": "Too late",
+        "date": "2021-11-25",
+    }
+
+    outputString, err := buildOutputString(tooEarly, rightDay, tooLate)
+    if err != nil {
+        t.Error(err)
+    }
+
+
+    httpClient := &mockHTTPClient{errOnDo: false, statusCode: 400}
+    config := sync.Config{
+        DBID: "mockdbid",
+        NotionKey: "fakeNotionKey",
+        HttpClient: httpClient,
+        Cmd: mockCommand{errOnOutput: false, outputString: outputString},
+        DateForEntries: "2021-11-24",
+    }
+    err = config.Exec(context.Background(), []string{})
+    if !errors.Is(err, sync.ErrHTTPStatus) {
+        t.Errorf("Expected error to be of type ErrHTTPStatus, got %+v", err)
     }
 }
 
@@ -98,6 +220,7 @@ func buildOutputString(tooEarly map[string]string, rightDay []map[string]string,
 
 type mockHTTPClient struct{
     errOnDo bool
+    statusCode int
     bodyOfRequest []byte
 }
 
@@ -112,8 +235,8 @@ func (m *mockHTTPClient) Do (req *http.Request) (*http.Response, error) {
     }
     m.bodyOfRequest = body
     resp := &http.Response{
-        Status: "200 OK",
-        StatusCode: 200,
+        Status: fmt.Sprintf("%d", m.statusCode),
+        StatusCode: m.statusCode,
         Body: io.NopCloser(bytes.NewBuffer([]byte{})),
     }
     return resp, nil

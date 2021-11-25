@@ -39,8 +39,11 @@ type Entry struct {
     Date string `json:"date"`
 }
 
-var ErrHTTPStatus = errors.New("posting to notion failed with status code: ")
+var ErrJrnlCommandFailed = errors.New("the command to get output from jrnl failed with: ")
+var ErrFailedToUnmarshalJrnlOutput = errors.New("failed to unmarshal jrnl output: ")
 
+var ErrPostingToNotion = errors.New("internal error making request to notion: ")
+var ErrHTTPStatus = errors.New("posting to notion failed with status code: ")
 
 func NewSyncFlagSet(httpClient httpInteractor, cmd commandRunner, dateForentries string) *ffcli.Command {
     c := &Config{HttpClient: httpClient, Cmd: cmd, DateForEntries: dateForentries}
@@ -74,12 +77,12 @@ func (c *Config) Exec(_ context.Context, _ []string) error {
 func (c *Config) getEntriesGroupedByDate() (map[string][]string, error) {
     jrnlOutput, err := c.Cmd.Output()
     if err != nil {
-        return nil, err
+        return nil, fmt.Errorf("%w%s", ErrJrnlCommandFailed, err)
     }
     jrnlResp := JrnlBody{}
     err = json.Unmarshal(jrnlOutput, &jrnlResp)
     if err != nil {
-        return nil, err
+        return nil, fmt.Errorf("%w%s", ErrFailedToUnmarshalJrnlOutput, err)
     }
     groupByDate := make(map[string][]string)
     for _, e := range jrnlResp.Entries {
@@ -110,7 +113,7 @@ func (c *Config) postToNotion(notionDocument NotionDocument) error {
 
     res, err := c.HttpClient.Do(req)
     if err != nil {
-        return err
+        return fmt.Errorf("%w%s", ErrPostingToNotion, err)
     }
 
     if res.StatusCode > 299 {
