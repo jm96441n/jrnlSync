@@ -1,15 +1,15 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"flag"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"time"
 
-	"github.com/jm96441n/jrnlNotion/cli"
+	"github.com/jm96441n/jrnlNotion/sync"
 	"github.com/peterbourgon/ff/v3/ffcli"
 )
 
@@ -19,10 +19,10 @@ func main() {
     rootFlagSet := flag.NewFlagSet("jrnlNotion", flag.ExitOnError)
 
     httpClient := &http.Client{}
-    buf := bytes.NewBuffer([]byte{})
-    output := buf
     cmd := exec.Command("jrnl", "--format", "json")
-    syncCommand := cli.NewSyncFlagSet(httpClient, output, cmd)
+    entryDate := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+
+    syncCommand := sync.NewSyncFlagSet(httpClient, cmd, entryDate)
 
     rootCommand := &ffcli.Command{
         ShortUsage: "jrnlNotion [flags] <subcommand>",
