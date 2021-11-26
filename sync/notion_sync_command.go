@@ -18,11 +18,11 @@ type Config struct {
     DBID string
     NotionKey string
     HttpClient httpInteractor
-    Cmd commandRunner
+    Cmd commandOutputter
     DateForEntries string
 }
 
-type commandRunner interface {
+type commandOutputter interface {
     Output() ([]byte, error)
 }
 
@@ -45,16 +45,16 @@ var ErrFailedToUnmarshalJrnlOutput = errors.New("failed to unmarshal jrnl output
 var ErrPostingToNotion = errors.New("internal error making request to notion: ")
 var ErrHTTPStatus = errors.New("posting to notion failed with status code: ")
 
-func NewSyncFlagSet(httpClient httpInteractor, cmd commandRunner, dateForentries string) *ffcli.Command {
+func NewNotionSyncFlagSet(httpClient httpInteractor, cmd commandOutputter, dateForentries string) *ffcli.Command {
     c := &Config{HttpClient: httpClient, Cmd: cmd, DateForEntries: dateForentries}
-    syncFlagSet := flag.NewFlagSet("jrnlNotion sync", flag.ExitOnError)
+    syncFlagSet := flag.NewFlagSet("jrnlsync notion", flag.ExitOnError)
     syncFlagSet.StringVar(&c.DBID, "d", "", "The id of the notion database to put the daily journal page")
     syncFlagSet.StringVar(&c.NotionKey, "k", "", "Your notion integration key")
 
 
     return &ffcli.Command{
         Name:       "sync",
-        ShortUsage: "jrnlNotion sync -d [DATABASE_ID] -k [NOTION_INTEGRATION_KEY]",
+        ShortUsage: "jrnlSync notion -d [DATABASE_ID] -k [NOTION_INTEGRATION_KEY]",
         ShortHelp:  "Syncs notes from yesterday to your notion database for backup",
         FlagSet:    syncFlagSet,
         Exec:       c.Exec,

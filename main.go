@@ -9,28 +9,40 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/jm96441n/jrnlNotion/setup"
-	"github.com/jm96441n/jrnlNotion/sync"
+	"github.com/jm96441n/jrnlSync/setup"
+	"github.com/jm96441n/jrnlSync/sync"
 	"github.com/peterbourgon/ff/v3/ffcli"
 )
 
 var Version string
 
 func main() {
-    rootFlagSet := flag.NewFlagSet("jrnlNotion", flag.ExitOnError)
+    rootFlagSet := flag.NewFlagSet("jrnlSync", flag.ExitOnError)
 
     httpClient := &http.Client{}
-    cmd := exec.Command("jrnl", "--format", "json")
+    jrnlCmd := exec.Command("jrnl", "--format", "json")
     entryDate := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+    notionSyncCommand := sync.NewNotionSyncFlagSet(httpClient, jrnlCmd, entryDate)
 
-    syncCommand := sync.NewSyncFlagSet(httpClient, cmd, entryDate)
+    cronTmpFile, err := os.CreateTemp("", "jrnlSync")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer os.Remove(cronTmpFile.Name())
+    getCurrentCronttabCmd := exec.Command(
+        "crontab",
+        "-l",
+    )
 
-    setupCommand := setup.NewSetupFlagSet()
+    cron := setup.NewCron(cronTmpFile ,getCurrentCronttabCmd)
+
+
+    setupCommand := setup.NewSetupFlagSet(cron)
 
     rootCommand := &ffcli.Command{
-        ShortUsage: "jrnlNotion [flags] <subcommand>",
+        ShortUsage: "jrnlSync [flags] <subcommand>",
         FlagSet: rootFlagSet,
-        Subcommands: []*ffcli.Command{setupCommand, syncCommand},
+        Subcommands: []*ffcli.Command{setupCommand, notionSyncCommand},
         Exec: func(_ context.Context, args []string) error {
             return flag.ErrHelp
         },

@@ -1,4 +1,4 @@
-module github.com/jm96441n/jrnlNotion
+module github.com/jm96441n/jrnlSync
 
 go 1.17
 
