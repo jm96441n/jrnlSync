@@ -1,1 +1,1 @@
-# jrnlNotion
+# jrnlSync
