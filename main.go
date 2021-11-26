@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/jm96441n/jrnlNotion/setup"
 	"github.com/jm96441n/jrnlNotion/sync"
 	"github.com/peterbourgon/ff/v3/ffcli"
 )
@@ -24,10 +25,12 @@ func main() {
 
     syncCommand := sync.NewSyncFlagSet(httpClient, cmd, entryDate)
 
+    setupCommand := setup.NewSetupFlagSet()
+
     rootCommand := &ffcli.Command{
         ShortUsage: "jrnlNotion [flags] <subcommand>",
         FlagSet: rootFlagSet,
-        Subcommands: []*ffcli.Command{syncCommand},
+        Subcommands: []*ffcli.Command{setupCommand, syncCommand},
         Exec: func(_ context.Context, args []string) error {
             return flag.ErrHelp
         },
