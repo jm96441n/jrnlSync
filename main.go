@@ -34,8 +34,8 @@ func main() {
         "-l",
     )
 
-    cron := setup.NewCron(cronTmpFile ,getCurrentCronttabCmd)
-
+    saveCronCmd := exec.Command("crontab", cronTmpFile.Name())
+    cron := setup.NewCron(cronTmpFile, getCurrentCronttabCmd, saveCronCmd)
 
     setupCommand := setup.NewSetupFlagSet(cron)
 
