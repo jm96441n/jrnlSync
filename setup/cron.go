@@ -3,14 +3,19 @@ package setup
 import (
 	"bytes"
 	"fmt"
-	"os"
-	"os/exec"
+	"io"
 )
 
 type Cron struct {
-    tmpFile *os.File
+    tmpFile fileWriterSyncer
     currentCronCmd commandOutputter
     saveCronCmd commandRunner
+}
+
+type fileWriterSyncer interface {
+    Sync() error
+    Name() string
+    io.WriteCloser
 }
 
 type commandOutputter interface {
@@ -21,10 +26,10 @@ type commandRunner interface {
     Run() error
 }
 
-func NewCron(tmpFile *os.File, currentCronCmd commandOutputter) Cron {
+func NewCron(tmpFile fileWriterSyncer, currentCronCmd commandOutputter, saveCronCmd commandRunner) Cron {
     return Cron{
         tmpFile: tmpFile,
-        saveCronCmd: exec.Command("crontab", tmpFile.Name()),
+        saveCronCmd: saveCronCmd,
         currentCronCmd: currentCronCmd,
     }
 }

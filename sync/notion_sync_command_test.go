@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/jm96441n/jrnlNotion/sync"
+	"github.com/jm96441n/jrnlSync/sync"
 )
 
 func TestExecSendsResultsFromJrnlToNotionForOnlyTheDateProvided(t *testing.T) {
