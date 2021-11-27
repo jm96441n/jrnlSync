@@ -3,6 +3,7 @@ package setup
 import (
 	"bufio"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -22,6 +23,8 @@ type Config struct {
 type stringReader interface {
     ReadString(byte) (string, error)
 }
+
+var ErrFailedToReadInput = errors.New("failed to read input from user")
 
 func NewSetupFlagSet(cron Cron) *ffcli.Command {
     c := NewConfig(cron, bufio.NewReader(os.Stdin), os.Stdout)
@@ -49,13 +52,13 @@ func (c Config) Exec(_ context.Context, _ []string) error {
     fmt.Fprint(c.out, "Please enter the DB id that the notes will be synced to: ")
     dbid, err := c.reader.ReadString('\n')
     if err != nil {
-        return err
+        return fmt.Errorf("%w: %s", ErrFailedToReadInput, err)
     }
     dbid = strings.ReplaceAll(dbid, "\n", "")
     fmt.Printf("Please enter your notion integration key: ")
     notionKey, err := c.reader.ReadString('\n')
     if err != nil {
-        return err
+        return fmt.Errorf("%w: %s", ErrFailedToReadInput, err)
     }
     notionKey = strings.ReplaceAll(notionKey, "\n", "")
 
