@@ -1,6 +1,6 @@
 .PHONY: .run
 run:
-	go build -ldflags="-X 'main.Version=0.2.0'" .
+	go build -ldflags="-X 'main.Version=1.0.0'" .
 
 .PHONY: .cov
 cov:
