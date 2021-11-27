@@ -53,7 +53,7 @@ func NewNotionSyncFlagSet(httpClient httpInteractor, cmd commandOutputter, dateF
 
 
     return &ffcli.Command{
-        Name:       "sync",
+        Name:       "notion",
         ShortUsage: "jrnlSync notion -d [DATABASE_ID] -k [NOTION_INTEGRATION_KEY]",
         ShortHelp:  "Syncs notes from yesterday to your notion database for backup",
         FlagSet:    syncFlagSet,
