@@ -6,13 +6,14 @@ before:
     - go mod tidy
     - go mod download
 builds:
-  env:
-    - CGO_ENABLED=0
-  goos:
-    - linux
-    - darwin
-  ldflags:
-    - -X 'main.Version=1.0.0'
+  -
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    ldflags:
+      - -X 'main.Version=1.0.0'
 archives:
   - replacements:
       darwin: Darwin
