@@ -78,6 +78,22 @@ brews:
 nfpms:
   - id: packages # here we say that artifacts built with nfpm will be identified with `packages` string.
     file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    homepage: https://www.github.com/jm96441n/jrnlSync
+    maintainer: John Maguire <john@johnmaguiredeveloper.com>
+
+    # Template to your app's description.
+    # Default is empty.
+    description: "Faciliatates automatic sync of jrnl notes to external sources"
+
+    # Your app's license.
+    # Default is empty.
+    license: MIT
+
+    # Formats to be generated.
+    formats:
+      - apk
+      - deb
+      - rpm
 
 publishers:
   - name: fury.io
