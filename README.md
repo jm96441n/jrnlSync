@@ -69,6 +69,8 @@ The following commands are available
 `setup`
 `notion`
 
+NOTE: Right now only the body of the notes are synced, soon we'll be syncing both the title and body.
+
 ### `setup`
 
 This command should be used the first time you download the package, as it's used to set the cron job that will perform
