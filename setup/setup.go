@@ -62,14 +62,14 @@ func (c Config) Exec(_ context.Context, _ []string) error {
     }
     notionKey = strings.ReplaceAll(notionKey, "\n", "")
 
-    fmt.Fprint(c.out, "Scheduling cron task to run every night to sync")
+    fmt.Fprint(c.out, "Scheduling cron task to run every night to sync\n")
 
     err = c.cron.addCron(fmt.Sprintf("1 12 * * * jrnlSync notion -d %s -k %s > ~/.jrnlSyncLogs.txt 2>&1\n", dbid, notionKey))
     if err != nil {
         return err
     }
 
-    fmt.Fprint(c.out, "Scheduled to run every day right after midinight!")
+    fmt.Fprint(c.out, "Scheduled to run every day right after midinight!\n")
 
     return nil
 }
